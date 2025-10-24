@@ -5,6 +5,8 @@ export default defineConfig(async () => {
     application: {},
     vite: {
       server: {
+        host: true,
+        allowedHosts: ['vibot.icerain.love'],
         proxy: {
           '/api': {
             changeOrigin: true,
@@ -14,6 +16,10 @@ export default defineConfig(async () => {
             ws: true,
           },
         },
+      },
+      preview: {
+        host: true,
+        allowedHosts: ['vibot.icerain.love'],
       },
     },
   };
