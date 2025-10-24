@@ -12,27 +12,27 @@ onMounted(() => {
   renderEcharts({
     legend: {
       bottom: 0,
-      data: ['访问', '趋势'],
+      data: ['当前季度', '上季度'],
     },
     radar: {
       indicator: [
         {
-          name: '网页',
+          name: '项目管理',
         },
         {
-          name: '移动端',
+          name: '财务审批',
         },
         {
-          name: 'Ipad',
+          name: '人事管理',
         },
         {
-          name: '客户端',
+          name: '资料库',
         },
         {
-          name: '第三方',
+          name: 'AI助手',
         },
         {
-          name: '其它',
+          name: '目标管理',
         },
       ],
       radius: '60%',
@@ -52,15 +52,15 @@ onMounted(() => {
             itemStyle: {
               color: '#b6a2de',
             },
-            name: '访问',
-            value: [90, 50, 86, 40, 50, 20],
+            name: '当前季度',
+            value: [85, 72, 68, 90, 95, 78],
           },
           {
             itemStyle: {
               color: '#5ab1ef',
             },
-            name: '趋势',
-            value: [70, 75, 70, 76, 20, 85],
+            name: '上季度',
+            value: [75, 68, 62, 82, 88, 70],
           },
         ],
         itemStyle: {

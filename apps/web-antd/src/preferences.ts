@@ -25,4 +25,9 @@ export const overridesPreferences = defineOverridesPreferences({
     colorPrimary: 'hsl(245 82% 67%)',
     mode: 'light',
   },
+  logo: {
+    enable: true,
+    fit: 'contain',
+    source: 'https://ice-kele.oss-cn-shanghai.aliyuncs.com/ViBotLogo.png',
+  },
 });
