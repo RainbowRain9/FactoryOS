@@ -10,4 +10,9 @@ export const overridesPreferences = defineOverridesPreferences({
   app: {
     name: import.meta.env.VITE_APP_TITLE,
   },
+  logo: {
+    enable: true,
+    fit: 'contain',
+    source: 'https://ice-kele.oss-cn-shanghai.aliyuncs.com/ViBotLogo.png',
+  },
 });
