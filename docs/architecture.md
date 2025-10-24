@@ -106,7 +106,8 @@ factoryos/
 - 工作台：今日概览、待办/我发起/我参与、最近活动与通知、全局搜索/命令面板
 - 项目管理：对话（项目）、项目列表、甘特图、看板、成本分析、周交付、报表与仪表盘、模板中心
 - 财务管理：对话（财务）、报表（日/周/月）、指标预警、历史采购对比、财务仪表盘
-- 审批管理：对话（审批）、发起申请、待我处理、我发起的、审批历史、流程配置与规则
+- 申请管理：发起申请、我发起的/申请历史
+- 审批管理：对话（审批）、待我处理、审批历史、流程配置与规则
 - 员工管理：对话（人事）、组织架构、员工档案、效率评估、报告生成（周报/月报）、技能矩阵
 - 资料库：对话（资料）、方案资料库、设计零件资料库、PLC 设计资料库、智能检索、上传与版本
 - 目标与 BI：对话（目标）、目标管理、目标审核、业务数据挖掘、宣传材料生成、业务智能仪表盘
@@ -116,6 +117,84 @@ factoryos/
 - 个人中心：我的资料、偏好设置（默认“智能模式”）、我的收藏、最近访问
 
 路由策略：每个模块至少包含 `chat` 与若干 `view` 路由，`chat` 为默认路由；命令面板与全局搜索可直达任意路由并支持参数化跳转。公司上下文切换后，所有视图与搜索结果即时收敛至当前公司可见数据。
+
+#### 审批与申请：路由与查询参数（对齐 PRD FR40/FR42A/FR42B/FR43）
+
+- 路由（前端）
+  - 对话（审批）：`/approvals/chat`（FR40）
+  - 对话（申请）：`/requests/chat`（智能申请助手）
+  - 发起申请：`/requests/create` 可带 `type=leave|travel|reimburse|seal|custom`（FR41）
+  - 我发起/申请历史：`/requests/mine`（FR42B）
+  - 待我处理（审批待办）：`/approvals/inbox`（FR42A）
+  - 审批历史：`/approvals/history`（FR42A）
+  - 流程配置与规则：`/approvals/definitions`、`/approvals/rules`（FR43）
+
+- 查询参数（前端 Query Schema）
+- 我发起/申请历史（FR42B，`/requests/mine`）
+    - `status`: draft|running|approved|rejected|withdrawn
+    - `type`: leave|travel|reimburse|seal|custom
+    - `startAt`, `endAt`: ISO 日期（发起/完成时间，配合 `timeKind=created|finished`）
+    - `amountMin`, `amountMax`: 金额区间
+    - `initiator`, `deptId`: 发起人/部门
+    - `q`: 关键字
+    - `page`, `pageSize`, `sortBy`, `sortOrder`
+  - 审批待办/审批历史（FR42A，`/approvals/inbox|/approvals/history`）
+    - `status`: pending|approved|returned|withdrawn
+    - `priority`: low|medium|high|urgent
+    - `sla`: "<12h"、">24h"（或分钟数）
+    - `node`: 流程节点标识
+    - `initiator`, `deptId`, `businessType`
+    - `startAt`, `endAt`, `amountMin`, `amountMax`
+    - `q`, `page`, `pageSize`, `sortBy`, `sortOrder`
+
+- API 契约（后端，示例）
+  - 列表（分页）统一响应：
+    ```json
+    {
+      "list": [ { /* Item */ } ],
+      "page": 1,
+      "pageSize": 20,
+      "total": 120
+    }
+    ```
+  - 我发起/申请历史（FR42B）：
+    - GET `/api/requests/mine` 查询参数同前端 Query Schema
+    - Item 字段建议：`id, code, title, type, initiator, dept, amount, status, createdAt, finishedAt`
+  - 审批待办（FR42A）：
+    - GET `/api/approvals/inbox` 查询参数同前端 Query Schema
+    - Item 字段建议：`id, code, title, type, node, initiator, dept, amount, status, slaRemaining, createdAt, updatedAt`
+  - 审批历史（FR42A）：
+    - GET `/api/approvals/history` 参数同 inbox，少 `sla`
+  - 动作接口（审批）：
+    - POST `/api/approvals/{id}/approve`
+    - POST `/api/approvals/{id}/reject`
+    - POST `/api/approvals/{id}/transfer`（转办）
+    - POST `/api/approvals/{id}/consign`（加签）
+    - POST `/api/approvals/{id}/urge`（催办）
+  - 申请接口：
+    - POST `/api/requests`（创建草稿/提交，支持附件）
+    - GET `/api/requests/{id}`、PUT `/api/requests/{id}`、POST `/api/requests/{id}/withdraw`
+  - 流程配置与规则（FR43）：
+    - GET `/api/workflow/definitions` 列出流程与节点权限
+    - GET `/api/workflow/rules/{ruleId}` 规则详情
+    - GET `/api/workflow/rules/{ruleId}/explain?context=...` 规则来源与影响解释
+
+##### 申请对话（/requests/chat）参数透传与回填
+
+- Dify iframe 参数（与 ai-assistant/chat 对齐）
+  - `url`：完整 iframe 地址（优先）
+  - `base` + `token`：拼接为 `${base}/chatbot/${token}`
+  - `inputs`：对象或 JSON 字符串；前端自动对每个字段执行 `gzip + base64 + encodeURIComponent` 后作为查询拼接
+  - `hideBrand`：true/1 时遮挡品牌角标（需许可）
+
+- 从对话回填到创建表单的两种方式（示例约定）
+  1) URL 直传：`/requests/create?prefill={...}&type=leave`
+  2) 会话存储：对话页写入 `sessionStorage.setItem('requests:prefill', JSON.stringify(payload))`，随后跳转 `/requests/create`
+
+- 创建页消费规则（示例实现）
+  - 优先读取 `route.query.prefill`（JSON）；否则读取 `sessionStorage['requests:prefill']`
+  - 解析成功后进行“回填提示”与“应用回填”操作（当无实际表单时，可先以占位展示）
+  - 应用后可清理会话存储，避免重复使用
 
 ### Implementation Milestones（与 PRD 对齐）
 

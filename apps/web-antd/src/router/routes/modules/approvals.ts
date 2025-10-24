@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
-    meta: { icon: 'mdi:check-decagram-outline', order: 400, title: '审批管理' },
+    meta: { icon: 'mdi:check-decagram-outline', order: 200, title: '审批管理' },
     name: 'ApprovalsRoot',
     path: '/approvals',
     redirect: '/approvals/chat',
@@ -14,22 +14,30 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '对话' },
       },
       {
-        name: 'ApprovalsCreate',
-        path: '/approvals/create',
-        component: () => import('#/views/factoryos/approvals/create/index.vue'),
-        meta: { title: '发起申请' },
-      },
-      {
-        name: 'ApprovalsTodo',
-        path: '/approvals/todo',
+        name: 'ApprovalsInbox',
+        path: '/approvals/inbox',
         component: () => import('#/views/factoryos/approvals/todo/index.vue'),
         meta: { title: '待我处理' },
-      },
-      {
-        name: 'ApprovalsMine',
-        path: '/approvals/mine',
-        component: () => import('#/views/factoryos/approvals/mine/index.vue'),
-        meta: { title: '我发起的' },
+        beforeEnter: (to, _from, next) => {
+          const allowedStatus = new Set(['pending', 'approved', 'returned', 'withdrawn']);
+          const allowedPriority = new Set(['low', 'medium', 'high', 'urgent']);
+          const q = { ...to.query } as Record<string, any>;
+          let mutated = false;
+          if (q.status && !allowedStatus.has(String(q.status))) {
+            delete q.status;
+            mutated = true;
+          }
+          if (q.priority && !allowedPriority.has(String(q.priority))) {
+            delete q.priority;
+            mutated = true;
+          }
+          if (q.sortOrder && !['asc', 'desc'].includes(String(q.sortOrder))) {
+            delete q.sortOrder;
+            mutated = true;
+          }
+          if (mutated) next({ path: to.path, query: q, replace: true });
+          else next();
+        },
       },
       {
         name: 'ApprovalsHistory',

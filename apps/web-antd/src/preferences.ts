@@ -6,8 +6,23 @@ import { defineOverridesPreferences } from '@vben/preferences';
  * !!! 更改配置后请清空缓存，否则可能不生效
  */
 export const overridesPreferences = defineOverridesPreferences({
-  // overrides
   app: {
-    name: import.meta.env.VITE_APP_TITLE,
+    layout: 'sidebar-mixed-nav',
+  },
+  breadcrumb: {
+    showHome: true,
+    styleType: 'background',
+  },
+  copyright: {
+    enable: false,
+  },
+  sidebar: {
+    autoActivateChild: true,
+    collapsed: true,
+  },
+  theme: {
+    builtinType: 'violet',
+    colorPrimary: 'hsl(245 82% 67%)',
+    mode: 'light',
   },
 });

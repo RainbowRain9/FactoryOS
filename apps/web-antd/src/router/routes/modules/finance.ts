@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
-    meta: { icon: 'mdi:currency-cny', order: 300, title: '财务管理' },
+    meta: { icon: 'mdi:currency-cny', order: 400, title: '财务管理' },
     name: 'FinanceRoot',
     path: '/finance',
     redirect: '/finance/chat',
